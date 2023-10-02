@@ -1,5 +1,5 @@
 import typing
-from PyQt6 import QtCore
+from PyQt6.QtCore import Qt
 from PyQt6.QtWidgets import QApplication, QVBoxLayout, QWidget, QLabel, QGridLayout, QLineEdit, QMainWindow,QPushButton,QTableWidget, QTableWidgetItem,QDialog,QComboBox
 from PyQt6.QtGui import QAction
 import sys,sqlite3
@@ -101,17 +101,36 @@ class InsertDialog(QDialog):
 class SearchDialog(QDialog):
     def __init__(self) -> None:
         super().__init__()
+        self.setWindowTitle("Search Student")
+        self.setFixedHeight(100)
+        self.setFixedWidth(400)
 
         layout = QVBoxLayout()
 
-        search_input = QLineEdit()
-        search_input.setPlaceholderText("type name to search..")
+        self.search_input = QLineEdit()
+        self.search_input.setPlaceholderText("type name to search..")
 
         search_button = QPushButton("Search")
+        search_button.clicked.connect(self.search)
 
-        layout.addWidget(search_input)
+        layout.addWidget(self.search_input)
         layout.addWidget(search_button)
 
+        self.setLayout(layout)
+
+    def search(self):
+        name = self.search_input.text()
+        connection = sqlite3.connect("database.db")
+        cursor = connection.cursor()
+        result = cursor.execute("SELECT * FROM students WHERE name=?",(name,))
+        rows = list(result)
+        items = main_window.table.findItems(name,Qt.MatchFlag.MatchFixedString)
+        for item in items:
+            # here '1' stands for the column which contains the search string: name
+            main_window.table.item(item.row(),1).setSelected(True)
+
+        cursor.close()
+        connection.close()
 
 app = QApplication(sys.argv)
 main_window = MainWindow()
