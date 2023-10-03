@@ -1,7 +1,7 @@
 import typing
 from PyQt6 import QtCore
 from PyQt6.QtCore import Qt
-from PyQt6.QtWidgets import QApplication, QVBoxLayout, QWidget, QLabel, QGridLayout, QLineEdit, QMainWindow,QPushButton,QTableWidget, QTableWidgetItem,QDialog,QComboBox,QToolBar,QStatusBar
+from PyQt6.QtWidgets import QApplication, QVBoxLayout, QWidget, QLabel, QGridLayout, QLineEdit, QMainWindow,QPushButton,QTableWidget, QTableWidgetItem,QDialog,QComboBox,QToolBar,QStatusBar, QMessageBox
 from PyQt6.QtGui import QAction, QIcon
 import sys,sqlite3
 # from datetime import datetime
@@ -22,6 +22,7 @@ class MainWindow(QMainWindow):
         file_menu_item.addAction(add_student_action)
 
         about_action = QAction("About",self)
+        # about_action.triggered.connect(self.about)
         help_menu_item.addAction(about_action)
 
         search_action = QAction(QIcon("icons//search.png"),"Search",self)
@@ -53,7 +54,7 @@ class MainWindow(QMainWindow):
         edit_button.clicked.connect(self.edit)
 
         delete_button = QPushButton("Delete Record")
-        delete_button.clicked.connect(self.lookup)
+        delete_button.clicked.connect(self.delete)
 
         # clear existing buttons
         children = self.findChildren(QPushButton)
@@ -230,7 +231,53 @@ class EditDialog(QDialog):
 
 
 class DeleteDialog(QDialog):
-    pass
+    def __init__(self) -> None:
+        super().__init__()
+        self.setWindowTitle("Delete Confirmation")
+
+        layout = QGridLayout()
+
+        # show selected name by default
+        index = main_window.table.currentRow()
+        self.default_student_name = main_window.table.item(index,1).text()
+        # get selected id
+        self.selected_id = main_window.table.item(index,0).text()
+
+        confirmation_text = f"Are you sure you want to remove {self.default_student_name} and all their associated data?"
+        confirmation_label = QLabel(confirmation_text)
+
+        yes_button = QPushButton("Yes")
+        yes_button.clicked.connect(self.remove_student)
+        no_button = QPushButton("No")
+        no_button.clicked.connect(self.close_window)
+
+        layout.addWidget(confirmation_label,0,0,1,2)
+        layout.addWidget(yes_button,1,0)
+        layout.addWidget(no_button,1,1)
+        self.setLayout(layout)
+
+    def remove_student(self):
+        connection = sqlite3.connect("database.db")
+        cursor = connection.cursor()
+        cursor.execute("DELETE FROM students WHERE id=?",(self.selected_id,))
+        connection.commit()
+        cursor.close()
+        connection.close()
+
+        # Refresh the table
+        main_window.load_data()
+
+        # close the window
+        self.close()
+
+        # confirmation message
+        confirmation_widget = QMessageBox()
+        confirmation_widget.setWindowTitle("Success!")
+        confirmation_widget.setText(f"{self.default_student_name} removed successfully!")
+        confirmation_widget.exec() 
+
+    def close_window(self):
+        self.close()
 
 app = QApplication(sys.argv)
 main_window = MainWindow()
