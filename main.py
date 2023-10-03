@@ -22,7 +22,7 @@ class MainWindow(QMainWindow):
         file_menu_item.addAction(add_student_action)
 
         about_action = QAction("About",self)
-        # about_action.triggered.connect(self.about)
+        about_action.triggered.connect(self.about)
         help_menu_item.addAction(about_action)
 
         search_action = QAction(QIcon("icons//search.png"),"Search",self)
@@ -92,6 +92,17 @@ class MainWindow(QMainWindow):
         search_dialog = SearchDialog()
         search_dialog.exec()
 
+    def about(self):
+        about_dialog  = AboutDialog()
+        about_dialog.exec()
+
+    
+class AboutDialog(QMessageBox):
+    def __init__(self):
+        super().__init__()
+        self.setWindowTitle("About")
+        content = f"""This app was created as a part of "The Python Mega course" with some minor changes. Feel free to use and modify the code."""
+        self.setText(content)
 
 class InsertDialog(QDialog):
     def __init__(self) -> None:
